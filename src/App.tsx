@@ -5,7 +5,6 @@ import Bond from './stages/Bond';
 import type { CreatureData, GamePhase } from './types';
 import { getCreatureMood } from './utils/creatureGen';
 
-// Try to load saved creature from localStorage
 function loadCreature(): CreatureData | null {
   try {
     const saved = localStorage.getItem('sparkbond_creature');
@@ -20,6 +19,7 @@ function App() {
     return saved ? 'bond' : 'egg';
   });
   const [creature, setCreature] = useState<CreatureData | null>(loadCreature);
+  const [ready, setReady] = useState(false);
 
   // Initialize Telegram WebApp
   useEffect(() => {
@@ -28,14 +28,25 @@ function App() {
       if (tg) {
         tg.ready();
         tg.expand();
+        tg.enableClosingConfirmation();
+        // Set theme colors
+        tg.setHeaderColor('#0a0a2e');
+        tg.setBackgroundColor('#0a0a2e');
       }
-    } catch {}
+    } catch (e) {
+      console.log('Running outside Telegram');
+    }
+    setReady(true);
   }, []);
 
   const handleAwakeningComplete = useCallback((newCreature: CreatureData) => {
     setCreature(newCreature);
     setPhase('bond');
     localStorage.setItem('sparkbond_creature', JSON.stringify(newCreature));
+    // Haptic feedback
+    try {
+      (window as any).Telegram?.WebApp?.HapticFeedback?.notification('success');
+    } catch {}
   }, []);
 
   const handleCreatureUpdate = useCallback((updated: CreatureData) => {
@@ -43,7 +54,6 @@ function App() {
     localStorage.setItem('sparkbond_creature', JSON.stringify(updated));
   }, []);
 
-  // Check daily session — refresh mood
   useEffect(() => {
     if (!creature) return;
     const refreshedMood = getCreatureMood({
@@ -56,6 +66,21 @@ function App() {
     }
   }, []);
 
+  if (!ready) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0a2e',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#666',
+      }}>
+        ✨
+      </div>
+    );
+  }
+
   return (
     <div style={styles.app}>
       {phase === 'egg' && (
@@ -64,24 +89,23 @@ function App() {
       {phase === 'bond' && creature && (
         <Bond creature={creature} onUpdate={handleCreatureUpdate} />
       )}
-      {/* Bottom nav placeholder */}
       {phase === 'bond' && (
         <div style={styles.bottomNav}>
-          <div style={styles.navItem}>
+          <div style={{...styles.navItem, opacity: 1}}>
             <span style={styles.navIcon}>🏠</span>
             <span style={styles.navLabel}>Bond</span>
           </div>
           <div style={styles.navItem}>
             <span style={styles.navIcon}>⚔️</span>
-            <span style={styles.navLabel}>Duels</span>
+            <span style={styles.navLabel}>Coming Soon</span>
           </div>
           <div style={styles.navItem}>
             <span style={styles.navIcon}>🏪</span>
-            <span style={styles.navLabel}>Shop</span>
+            <span style={styles.navLabel}>Coming Soon</span>
           </div>
           <div style={styles.navItem}>
             <span style={styles.navIcon}>🏆</span>
-            <span style={styles.navLabel}>Leaderboard</span>
+            <span style={styles.navLabel}>Coming Soon</span>
           </div>
         </div>
       )}
@@ -97,10 +121,10 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#0a0a2e',
     color: '#fff',
     fontFamily: "'Segoe UI', -apple-system, sans-serif",
-    position: 'relative' as const,
+    position: 'relative',
   },
   bottomNav: {
-    position: 'fixed' as const,
+    position: 'fixed',
     bottom: 0,
     left: 0,
     right: 0,
@@ -120,7 +144,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '2px',
     cursor: 'pointer',
     padding: '4px 12px',
-    opacity: 0.6,
+    opacity: 0.5,
   },
   navIcon: {
     fontSize: '20px',
