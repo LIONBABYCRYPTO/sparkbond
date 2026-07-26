@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sanctuary from '../components/Sanctuary';
 import CreatureCanvas from '../components/CreatureCanvas';
+import FeedingAnimation from '../components/FeedingAnimation';
 import type { CreatureData, CreatureStats, CreatureMood } from '../types';
 import { getCreatureMood } from '../utils/creatureGen';
 
@@ -33,6 +34,7 @@ export default function Bond({ creature, onUpdate }: BondProps) {
     ACTIONS.map(a => ({ ...a, startedAt: null }))
   );
   const [now, setNow] = useState(Date.now());
+  const [feeding, setFeeding] = useState(false);
 
   // Tick every second for timer displays
   useEffect(() => {
@@ -127,6 +129,47 @@ export default function Bond({ creature, onUpdate }: BondProps) {
         onUpdate(c);
       }} />
 
+      {/* Bond Meter */}
+      <div style={styles.bondMeter}>
+        <div style={styles.bondLabel}>
+          ❤️ Bond {creature.bondLevel}%
+        </div>
+        <div style={styles.bondBarBg}>
+          <div style={{
+            ...styles.bondBarFill,
+            width: `${creature.bondLevel}%`,
+            background: creature.bondLevel > 80 
+              ? 'linear-gradient(90deg, #FF69B4, #FFD700, #FF69B4)'
+              : creature.bondLevel > 50
+                ? 'linear-gradient(90deg, #6C5CE7, #FFD700)'
+                : 'linear-gradient(90deg, #6C5CE7, #A29BFE)',
+          }} />
+        </div>
+        {creature.bondLevel === 100 && (
+          <div style={styles.maxBond}>✨ Ultimate Bond Achieved ✨</div>
+        )}
+      </div>
+
+      {feeding && (
+        <FeedingAnimation
+          appearance={creature.appearance}
+          creatureName={creature.name}
+          onComplete={() => {
+            setFeeding(false);
+            const now = Date.now();
+            const c = {...creature};
+            c.lastFed = now;
+            c.stats.affection = Math.min(100, c.stats.affection + 3);
+            c.stats.might = Math.min(100, c.stats.might + 2);
+            c.bondLevel = Math.min(100, c.bondLevel + 2);
+            c.totalActions++;
+            c.emotion = 'loved';
+            c.mood = 'excited';
+            onUpdate(c);
+          }}
+        />
+      )}
+
       {/* Running timers */}
       {runningActions.length > 0 && (
         <div style={styles.section}>
@@ -172,7 +215,7 @@ export default function Bond({ creature, onUpdate }: BondProps) {
             <button
               key={timer.id}
               style={styles.actionCard}
-              onClick={() => startAction(timer.id)}
+              onClick={() => timer.id === 'feed' ? setFeeding(true) : startAction(timer.id)}
             >
               <div style={styles.actionIcon}>{timer.icon}</div>
               <div style={styles.actionLabel}>{timer.label}</div>
@@ -275,6 +318,40 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     cursor: 'pointer',
     fontWeight: '600',
+  },
+  bondMeter: {
+    width: '100%',
+    maxWidth: '280px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    marginTop: '8px',
+  },
+  bondLabel: {
+    fontSize: '12px',
+    color: '#aaa',
+    textTransform: 'uppercase',
+    letterSpacing: '1px',
+  },
+  bondBarBg: {
+    width: '100%',
+    height: '6px',
+    background: 'rgba(255,255,255,0.08)',
+    borderRadius: '3px',
+    overflow: 'hidden',
+  },
+  bondBarFill: {
+    height: '100%',
+    borderRadius: '3px',
+    transition: 'width 0.5s ease-out',
+  },
+  maxBond: {
+    fontSize: '11px',
+    color: '#FF69B4',
+    fontStyle: 'italic',
+    marginTop: '4px',
+    animation: 'pulse 1.5s ease-in-out infinite',
   },
   actionsGrid: {
     display: 'grid',
