@@ -259,11 +259,40 @@ export default function CreatureCanvas({ creature, size = 200, onPet }: Creature
       ctx.beginPath(); ctx.ellipse(18 * s, -10 * s, 14 * s, Math.max(0.5, blinkRef.current) * s, 0, 0, Math.PI * 2); ctx.fill();
     }
 
-    // === MOUTH ===
+    // === MOUTH + IDLE ACTIONS ===
     if (idleAction === 2) {
-      // Yawn mouth
+      // Yawn mouth (big open mouth)
       ctx.fillStyle = '#333';
       ctx.beginPath(); ctx.ellipse(0, 15 * s, 8 * s, 10 * s, 0, 0, Math.PI * 2); ctx.fill();
+      // Tiny tongue
+      ctx.fillStyle = '#FF6B9D';
+      ctx.beginPath(); ctx.ellipse(0, 22 * s, 4 * s, 4 * s, 0, 0, Math.PI); ctx.fill();
+    } else if (idleAction === 3) {
+      // Peek - head slightly tilted, curious eyes
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.arc(0, 10 * s, 10 * s, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+      // Slight body tilt
+      ctx.restore(); // end body save
+      ctx.save(); // re-begin
+    } else if (idleAction === 4) {
+      // Roll - creature slightly tilted
+      ctx.rotate(Math.sin(t * 0.05) * 0.1);
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.arc(0, 8 * s, 10 * s, 0.3, Math.PI - 0.3);
+      ctx.stroke();
+    } else if (idleAction === 5) {
+      // Wave - one paw raised
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.arc(0, 8 * s, 10 * s, 0.3, Math.PI - 0.3);
+      ctx.stroke();
+      // Floating paw (drawn after body restore)
     } else if (emotion === 'happy' || emotion === 'loved') {
       ctx.strokeStyle = '#333';
       ctx.lineWidth = 2 * s;
@@ -330,7 +359,25 @@ export default function CreatureCanvas({ creature, size = 200, onPet }: Creature
       }
     }
 
-    ctx.restore(); // end body translate/scale
+    ctx.restore(); // end body save
+    
+    // === WAVE PAW (drawn outside body save for top layer) ===
+    if (idleAction === 5) {
+      const pawY = -15 * s + Math.sin(t * 0.08) * 8 * s;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(-50 * s, pawY, 8 * s, 0, Math.PI * 2);
+      ctx.fillStyle = `rgb(${Math.min(255, rgb.r + 30)}, ${Math.min(255, rgb.g + 30)}, ${Math.min(255, rgb.b + 30)})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(${accent.r}, ${accent.g}, ${accent.b}, 0.3)`;
+      ctx.lineWidth = 2 * s;
+      ctx.stroke();
+      // Tiny paw pads
+      ctx.fillStyle = `rgba(${accent.r}, ${accent.g}, ${accent.b}, 0.4)`;
+      ctx.beginPath(); ctx.arc(-53 * s, pawY + 3 * s, 2 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-47 * s, pawY + 3 * s, 2 * s, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
 
     // === ABOVE ALL: floating magical aura particles ===
     for (let i = 0; i < 5; i++) {
@@ -369,7 +416,7 @@ export default function CreatureCanvas({ creature, size = 200, onPet }: Creature
 
       // Idle action cycling
       if (timeRef.current - idleTimerRef.current > 400 + Math.random() * 300) {
-        idleActionRef.current = Math.floor(Math.random() * 3); // 0=normal, 1=stretch, 2=yawn
+        idleActionRef.current = Math.floor(Math.random() * 6); // 0=normal, 1=stretch, 2=yawn, 3=peek, 4=roll, 5=wave
         idleTimerRef.current = timeRef.current;
       }
 
