@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import EnhancedEgg from '../components/EnhancedEgg';
 import Sanctuary from '../components/Sanctuary';
 import CreatureDisplay from '../components/CreatureDisplay';
-import { generateCreature, getTelegramUser } from '../utils/creatureGen';
+import { generateCreature, getTelegramUser, getPersonality, getTailType } from '../utils/creatureGen';
 import type { CreatureData, GamePhase } from '../types';
 
 interface AwakeningProps {
@@ -38,7 +38,7 @@ export default function Awakening({ onComplete }: AwakeningProps) {
       name,
       ownerName: user?.first_name || 'Strange One',
       hatchedAt: now,
-      appearance,
+      appearance: { ...appearance, tailType: getTailType(userId) },
       stats: {
         affection: 5,
         might: 2,
@@ -51,7 +51,12 @@ export default function Awakening({ onComplete }: AwakeningProps) {
       lastFed: now,
       lastPetted: now,
       mood: 'excited',
+      emotion: 'happy',
+      personality: getPersonality(userId),
       totalActions: 0,
+      bondLevel: 5,
+      nightVisitor: false,
+      totalPlayTime: 0,
     };
 
     setCreature(newCreature);
@@ -62,17 +67,22 @@ export default function Awakening({ onComplete }: AwakeningProps) {
 
   return (
     <Sanctuary creature={creature || { 
-      appearance: eggAppearance || { baseColor: '#6C5CE7', accentColor: '#FFD700', eyeColor: '#00FF88', pattern: 'none', hornType: 'none', size: 'small', markings: 0 },
+      appearance: { ...eggAppearance!, tailType: 'fox' },
       stats: { affection: 0, might: 0, wisdom: 0, speed: 0, spirit: 0, spark: 0 },
-      name: '',
+      name: creatureName,
       ownerName: '',
       hatchedAt: 0,
       evolution: 0,
       lastFed: 0,
       lastPetted: 0,
       mood: 'excited',
+      emotion: 'neutral',
+      personality: 'curious',
       totalActions: 0,
+      bondLevel: 0,
       id: '',
+      nightVisitor: false,
+      totalPlayTime: 0,
     }}>
       <div style={styles.header}>
         <div style={styles.greeting}>Welcome, {userName}...</div>

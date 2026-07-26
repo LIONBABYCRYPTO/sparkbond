@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Sanctuary from '../components/Sanctuary';
-import CreatureDisplay from '../components/CreatureDisplay';
+import CreatureCanvas from '../components/CreatureCanvas';
 import type { CreatureData, CreatureStats, CreatureMood } from '../types';
 import { getCreatureMood } from '../utils/creatureGen';
 
@@ -118,8 +118,14 @@ export default function Bond({ creature, onUpdate }: BondProps) {
         </div>
       </div>
 
-      {/* Creature display */}
-      <CreatureDisplay creature={creature} />
+      {/* Living creature */}
+      <CreatureCanvas creature={creature} size={220} onPet={() => {
+        const now = Date.now();
+        const c = {...creature};
+        c.lastPetted = now;
+        c.bondLevel = Math.min(100, c.bondLevel + 1);
+        onUpdate(c);
+      }} />
 
       {/* Running timers */}
       {runningActions.length > 0 && (
