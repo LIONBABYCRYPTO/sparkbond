@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import Sanctuary from '../components/Sanctuary';
 import CreatureDisplay from '../components/CreatureDisplay';
 import type { CreatureData, CreatureStats, CreatureMood } from '../types';
 import { getCreatureMood } from '../utils/creatureGen';
@@ -108,7 +109,8 @@ export default function Bond({ creature, onUpdate }: BondProps) {
   const availableActions = timers.filter(t => !t.startedAt);
 
   return (
-    <div style={styles.container}>
+    <Sanctuary creature={creature}>
+      <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.title}>The Bond</div>
         <div style={styles.subtitle}>
@@ -179,6 +181,7 @@ export default function Bond({ creature, onUpdate }: BondProps) {
         </div>
       </div>
     </div>
+    </Sanctuary>
   );
 }
 
@@ -187,7 +190,8 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     padding: '16px',
     paddingBottom: '100px',
-    background: 'linear-gradient(180deg, #0a0a2e 0%, #1a1a3e 100%)',
+    position: 'relative',
+    zIndex: 2,
   },
   header: {
     textAlign: 'center',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import Egg from '../components/Egg';
+import EnhancedEgg from '../components/EnhancedEgg';
+import Sanctuary from '../components/Sanctuary';
 import CreatureDisplay from '../components/CreatureDisplay';
 import { generateCreature, getTelegramUser } from '../utils/creatureGen';
 import type { CreatureData, GamePhase } from '../types';
@@ -12,10 +13,18 @@ export default function Awakening({ onComplete }: AwakeningProps) {
   const [phase, setPhase] = useState<GamePhase>('egg');
   const [creature, setCreature] = useState<CreatureData | null>(null);
   const [userName, setUserName] = useState('');
+  const [creatureName, setCreatureName] = useState('');
+  const [eggAppearance, setEggAppearance] = useState<CreatureData['appearance'] | null>(null);
 
   useEffect(() => {
     const user = getTelegramUser();
     setUserName(user?.first_name || 'Strange One');
+
+    // Pre-generate creature for the egg animation
+    const userId = String(user?.id || Date.now());
+    const { appearance, name } = generateCreature(userId);
+    setEggAppearance(appearance);
+    setCreatureName(name);
   }, []);
 
   const handleHatch = () => {
@@ -48,81 +57,58 @@ export default function Awakening({ onComplete }: AwakeningProps) {
     setCreature(newCreature);
     setPhase('awakened');
 
-    // Auto-advance after showing creature
-    setTimeout(() => {
-      onComplete(newCreature);
-    }, 5000);
+    setTimeout(() => onComplete(newCreature), 3000);
   };
 
-  if (phase === 'egg' || phase === 'hatching') {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div style={styles.subtitle}>A Mysterious Presence...</div>
-        </div>
-        <Egg 
-          appearance={{
-            baseColor: '#6C5CE7',
-            accentColor: '#FFD700',
-            eyeColor: '#00FF88',
-            pattern: 'none',
-            hornType: 'none',
-            size: 'small',
-            markings: 0,
-          }}
+  return (
+    <Sanctuary creature={creature || { 
+      appearance: eggAppearance || { baseColor: '#6C5CE7', accentColor: '#FFD700', eyeColor: '#00FF88', pattern: 'none', hornType: 'none', size: 'small', markings: 0 },
+      stats: { affection: 0, might: 0, wisdom: 0, speed: 0, spirit: 0, spark: 0 },
+      name: '',
+      ownerName: '',
+      hatchedAt: 0,
+      evolution: 0,
+      lastFed: 0,
+      lastPetted: 0,
+      mood: 'excited',
+      totalActions: 0,
+      id: '',
+    }}>
+      <div style={styles.header}>
+        <div style={styles.greeting}>Welcome, {userName}...</div>
+      </div>
+
+      {phase === 'egg' && eggAppearance && (
+        <EnhancedEgg
+          appearance={eggAppearance}
+          creatureName={creatureName}
           onHatch={handleHatch}
         />
-      </div>
-    );
-  }
+      )}
 
-  if (phase === 'awakened' && creature) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div style={styles.greeting}>Welcome, {userName}...</div>
-          <div style={styles.subtitle}>A bond beyond words</div>
-        </div>
-        <CreatureDisplay creature={creature} />
-        <div style={styles.continueHint}>
-          Preparing your sanctuary...
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+      {phase === 'awakened' && creature && (
+        <>
+          <CreatureDisplay creature={creature} />
+          <div style={styles.continue}>Preparing your sanctuary...</div>
+        </>
+      )}
+    </Sanctuary>
+  );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '20px',
-    background: 'linear-gradient(180deg, #0a0a2e 0%, #1a1a3e 50%, #2a1a3e 100%)',
-  },
   header: {
     textAlign: 'center',
-    marginBottom: '20px',
+    padding: '10px',
+    animation: 'fadeIn 1s ease-out',
   },
   greeting: {
-    fontSize: '28px',
-    fontWeight: '700',
-    color: '#FFD700',
-    textShadow: '0 0 30px rgba(255,215,0,0.3)',
-    marginBottom: '8px',
-    animation: 'fadeInUp 0.8s ease-out',
-  },
-  subtitle: {
     fontSize: '16px',
     color: '#aaa',
     fontStyle: 'italic',
-    animation: 'fadeIn 1s ease-out 0.5s both',
+    fontFamily: 'serif',
   },
-  continueHint: {
+  continue: {
     marginTop: '20px',
     color: '#666',
     fontSize: '13px',
